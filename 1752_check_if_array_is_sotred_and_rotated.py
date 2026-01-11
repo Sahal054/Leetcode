@@ -15,6 +15,33 @@ def check(nums):
 
 
 
+"""
+now for a solution which is less than O(n^2) 
+we are gonna transform this problem into a sliding window. the best way to deal with rotation arrays is to add the array with itself
+
+eg 3,4,5,1,2
+becomes -  3,4,5,1,2,3,4,5,1,2
+                 L       R
+as you can see we have found our answer. but finding the lenght is the issue we cant take the lenght of the R element or something cause all the elements are differnt
+fiding the window using two loops is also O(n^2)
+
+now the next solution is simply to check if the number is in ascending order, if the previous number is more than R the  bring L to R
+
+this makes the window souluion.. but it takes extra space we can eliminate that by simply modding that index by the lenght
+
+3 4 5 5 1 2   len = 6  
+0 1 2 3 4 5 
+
+                i 
+3 4 5 5 1 2 3 4 5 5 1 2 
+0 1 2 3 4 5 6 7 8 9 10 11
+
+8%6 = 2 
+now we just retrun if the count == len of the array if yes. we have our answer 
+
+
+"""
+
 
 
 def check(self, nums):

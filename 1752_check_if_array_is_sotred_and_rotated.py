@@ -43,6 +43,31 @@ now we just retrun if the count == len of the array if yes. we have our answer
 """
 
 
+class Solution(object):
+    def check(self, nums):
+        N = len(nums)
+        if N == 1:
+            return True
+            
+        l = 0
+        r = 1
+
+        # We check up to 2*N to simulate the circular array
+        while r < N * 2:
+            # Check if the non-decreasing order is maintained
+            if nums[(r - 1) % N] <= nums[r % N]:
+                # If the window size reaches N, we found a valid rotation
+                if (r - l + 1) == N:
+                    return True
+                r += 1  # Expand the window
+            else:
+                # Sequence broken, reset the left pointer to the current right pointer
+                l = r
+                r += 1
+                
+        return False
+
+
 
 def check(self, nums):
         N = len(nums)

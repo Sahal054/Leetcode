@@ -1,3 +1,32 @@
+"""
+Docstring for 189_Rotate_array
+
+
+There are two ways one is the obivous way to push the numbers into another array with index i+2 [where 2 =k]
+
+ this takes N space
+
+we can do this with by taking no space.
+
+input:[1,2,3,4,5,6,7] k =3
+
+*revese the array 
+
+ [7,6,5 |,4,3,2,1]
+        K
+looks close..now reverse the number from start to k and k to end
+
+ [5,6,7 |,1,2,3,4]
+        k
+
+output: [5,6,7,1,2,3,4]
+ 
+   
+"""
+
+
+
+
 class Solution(object):
     def rotate(self, nums, k):
      k = k% len(nums)

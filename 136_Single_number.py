@@ -1,3 +1,19 @@
+"""
+Docstring for 136_Single_number
+
+most easiest way is just to XOR the number
+
+res = 0
+0^2  = 2
+2^2 = 0
+0^1 =1
+1^1 =0
+0^4 = 4 - our ans
+
+[4,1,2,1,2] 
+"""
+
+
 from typing import Counter
 
 

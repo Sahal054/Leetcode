@@ -68,6 +68,128 @@
 
 
 
+# class Solution: 
+#     def frequency(self, nums):
+#         self.hashmap = {}
+#         for i in nums:
+#             if i in self.hashmap:
+#                 self.hashmap[i] +=1
+#             else: 
+#                 self.hashmap[i] = 1
+
+#     def display(self):
+
+#         for i,v in self.hashmap.items():
+#             print(f"value{i} , count{v}")
+
+
+# nums =  [8,2,3,4,5,6,6,6,6,3,1,3,8,5,9]
+
+# sol1 = Solution()
+# sol1.frequency(nums)
+
+# sol1.display()
+
+
+# def rev(num):
+#     res = 0
+#     is_neg = False
+
+#     if num<0:
+#         num = abs(num)
+#         is_neg = True
+
+#     while num:
+#         d = num%10 
+#         num = num//10
+#         res = (res*10)+d
+
+#     if is_neg:
+#         return -res    
+#     return res
+
+
+# num = 123
+
+# print(rev(num))
+
+
+
+# def rev(s):
+#     s = list(s)
+
+#     l,r = 0,len(s)-1
+
+#     while l<r :
+#         s[l],s[r] = s[r],s[l]
+#         l+=1
+#         r-=1
+#     return "".join(s)
+
+# s = "hello does this work"
+
+# print(rev(s))
+
+
+
+
+# def rev(s):
+#     s = list(s)
+
+#     l,r = 0,len(s)-1
+
+#     while l<r :
+#         s[l],s[r] = s[r],s[l]
+#         l+=1
+#         r-=1
+#     return "".join(s)
+
+# s = "hello does this work"
+
+    
+
+# print(rev(s))
+
+
+
+# def rev(s):
+#     s = s.split()
+
+#     l,r = 0,len(s)-1
+
+#     while l<r :
+#         s[l],s[r] = s[r],s[l]
+#         l+=1
+#         r-=1
+
+#     return " ".join(s)
+  
+
+
+
+# s = "hello does this work"
+
+# print(rev(s))
+
+
+
+s= ["h","e","l","l","o"]
+
+
+def rev(l,r):
+    if l<r:
+        s[l],s[r] = s[r],s[l] 
+        return rev(l+1,r-1)
+    else:
+        return s    
+
+print(rev(0,len(s)-1))
+
+
+
+
+
+
 
 
 

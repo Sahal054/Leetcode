@@ -78,3 +78,77 @@ class Solution:
             if level:
                 res.append(level)
         return res                     
+
+
+
+
+
+
+
+
+
+
+
+
+# RAW TREEE 
+
+
+class node:
+    def __init__(self,value):
+        self.value = value
+        self.left = None
+        self.right = None
+
+
+class Solution:
+    def BFS(self, root: node):
+        res =  []
+        queue = []
+        current_node = root
+        queue.append(current_node)
+
+        while queue:
+            current_node = queue.pop(0)
+            res.append(current_node.value)
+            if current_node.left:
+                queue.append(current_node.left)
+            if current_node.right:
+                queue.append(current_node.right)
+
+        return res 
+            
+                    
+#==========================================
+# Sample Example Setup & Execution
+# ==========================================
+
+# Let's build the following binary tree:
+#        1
+#       / \
+#      2   3
+#     / \   \
+#    4   5   6
+
+# 1. Create the nodes
+root = node(1)
+root.left = node(2)
+root.right = node(3)
+root.left.left = node(4)
+root.left.right = node(5)
+root.right.right = node(6)
+
+# 2. Instantiate the Solution class
+sol = Solution()
+
+# 3. Run the BFS method and print the result
+result = sol.BFS(root)
+
+print("Tree Structure:")
+print("       1")
+print("      / \\")
+print("     2   3")
+print("    / \\   \\")
+print("   4   5   6")
+print("-" * 20)
+print(f"BFS Traversal Output: {result}")
+# Expected Output: [1, 2, 3, 4, 5, 6]

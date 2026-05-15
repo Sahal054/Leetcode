@@ -42,3 +42,19 @@ class Solution(object):
         return dp[n]            
         
 ##O[n]
+
+#bottom up DP removed the array so space complexity is O(1)
+class Solution:
+    def fib(self, n: int) -> int:
+        if n ==0:
+            return 0
+        if n == 1:
+            return 1
+        one = 1
+        zero = 0
+
+        for i in range(n-1):
+            temp = one
+            one = one + zero
+            zero = temp
+        return one    

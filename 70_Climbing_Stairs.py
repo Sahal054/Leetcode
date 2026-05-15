@@ -78,3 +78,46 @@ class Solution:
             two = temp
             
         return one
+
+
+"""
+
+This solution uses an explicit DP array (memoization table) to store the 
+number of ways to reach every step from 0 to n. It follows the same 
+Fibonacci logic: the ways to reach step 'i' is the sum of ways to reach 
+the two steps below it.
+
+--- Visual Logic (The DP Table) ---
+
+Example for n = 5:
+Index (Step):  [0]  [1]  [2]  [3]  [4]  [5]
+Ways:          [1]  [1]  [2]  [3]  [5]  [8]
+
+1. Base Cases:
+   - dp[0] = 1 (1 way to stay at the ground)
+   - dp[1] = 1 (1 way to reach the 1st step: a single 1-step jump)
+
+2. Filling the Table:
+   - dp[2] = dp[1] + dp[0] = 1 + 1 = 2
+   - dp[3] = dp[2] + dp[1] = 2 + 1 = 3
+   - dp[4] = dp[3] + dp[2] = 3 + 2 = 5
+   - dp[5] = dp[4] + dp[3] = 5 + 3 = 8
+
+Final Result: dp[5] = 8
+"""
+
+class Solution:
+    def climbStairs(self, n: int) -> int:
+        # Create an array of size n + 1
+        dp = [0] * (n + 1)
+        
+        # Initialize base cases
+        dp[0] = 1
+        dp[1] = 1
+
+        # Fill the table up to n
+        for i in range(2, n + 1):
+            dp[i] = dp[i-1] + dp[i-2]
+            
+        return dp[n]
+        

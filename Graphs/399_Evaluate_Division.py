@@ -115,3 +115,134 @@ class Solution:
 
         # 3. Process all queries
         return [bfs(q[0], q[1]) for q in queries]
+
+
+
+
+
+
+
+
+#DFS SOLUTION 
+
+"""
+399. Evaluate Division (Graph & Depth-First Search)
+
+The objective is to evaluate a series of division queries (e.g., a / c = ?) based on a 
+given set of equations (e.g., a / b = 2.0) and their corresponding values. If a query 
+cannot be determined, return -1.0.
+
+While the previous solution used Breadth-First Search (BFS) to find the path, this 
+solution achieves the same goal using Depth-First Search (DFS) via recursion. Instead 
+of carrying the cumulative weight forward, DFS explores deep into the graph and 
+multiplies the edge weights as the recursive functions "unwind" back up the call stack.
+
+--- The Core Intuition ---
+1. Graph Construction: Just like the BFS approach, we build an adjacency list (`adj`). 
+   If A / B = V, we add a directed edge A -> B (weight V) and B -> A (weight 1/V).
+2. DFS Traversal: For a query [src, target], we start at `src`. We mark it visited 
+   and recursively call DFS on its neighbors.
+3. Base Cases:
+   - If either node doesn't exist in the graph, return -1.
+   - If `src == target`, we have found the destination! We return 1 (because any 
+     number divided by itself is 1, and 1 is the multiplicative identity).
+4. Unwinding and Multiplying: When the target is found, the base case returns 1. 
+   As each recursive call finishes, it takes the `result` from the successful deeper 
+   call and multiplies it by the weight of the edge it just traversed.
+
+--- Visual Traversal Walkthrough ---
+
+Equations: [["a","b"], ["b","c"]] | Values: [2.0, 3.0]
+Query: ["a", "c"]
+
+[ PHASE 1: Graph Construction ]
+- a / b = 2.0  ->  adj["a"] appends ["b", 2.0]  | adj["b"] appends ["a", 0.5]
+- b / c = 3.0  ->  adj["b"] appends ["c", 3.0]  | adj["c"] appends ["b", 0.33]
+
+[ PHASE 2: Evaluating Query ["a", "c"] using DFS ]
+Start: dfs("a", "c", visit={})
+
+-> CALL 1: dfs("a", "c", visit={"a"})
+   - "a" is not "c".
+   - Explore neighbors of "a": finds "b" (weight = 2.0).
+   - "b" is not in visit set. 
+   - Recursive call -> dfs("b", "c", visit={"a"})
+
+      -> CALL 2: dfs("b", "c", visit={"a", "b"})
+         - "b" is not "c".
+         - Explore neighbors of "b": finds "a" (skip, visited) and "c" (weight = 3.0).
+         - "c" is not in visit set.
+         - Recursive call -> dfs("c", "c", visit={"a", "b"})
+
+            -> CALL 3: dfs("c", "c", visit={"a", "b", "c"})
+               - Base case hit: src == target ("c" == "c")!
+               - RETURN 1
+
+      -> BACK IN CALL 2:
+         - `result` from Call 3 is 1. 
+         - It is not -1, so a valid path was found.
+         - Multiply result by the edge weight to "c": 1 * 3.0 = 3.0.
+         - RETURN 3.0
+
+-> BACK IN CALL 1:
+   - `result` from Call 2 is 3.0.
+   - It is not -1, so a valid path was found.
+   - Multiply result by the edge weight to "b": 3.0 * 2.0 = 6.0.
+   - RETURN 6.0
+
+Final Result for query ["a", "c"] is 6.0.
+
+--- Complexity ---
+- Time Complexity: O(Q * (V + E)) where Q is the number of queries, V is the number of 
+  unique variables (nodes), and E is the number of equations (edges). In the worst case, 
+  each query triggers a DFS that visits every node and edge.
+- Space Complexity: O(V + E) to store the adjacency list. The DFS recursion call stack 
+  and the `visit` set will take up to O(V) space. Overall space is O(V + E).
+"""
+
+from typing import List
+import collections
+
+class Solution:
+    def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+        # Adjacency list for the graph: node -> list of [neighbor, weight]
+        adj = collections.defaultdict(list)
+
+        # 1. Build the Graph
+        for i, eq in enumerate(equations):
+            a, b = eq
+            # A / B = value
+            adj[a].append([b, values[i]])
+            # B / A = 1 / value
+            adj[b].append([a, 1 / values[i]])
+
+        # 2. DFS Helper Function
+        def dfs(src, target, visit):
+            # If either node is unknown, no path exists
+            if src not in adj or target not in adj:
+                return -1.0
+            
+            # Base case: reached the destination
+            if src == target:
+                return 1.0
+        
+            # Mark current node as visited to prevent cycles
+            visit.add(src)
+
+            # Explore all neighbors
+            for nei, weight in adj[src]:
+                if nei not in visit:
+                    # Recursively search for the target from the neighbor
+                    result = dfs(nei, target, visit)
+                
+                    # If the deeper call found a valid path (didn't return -1)
+                    if result != -1.0:
+                        # Multiply the returned result by the current edge's weight
+                        return result * weight
+            
+            # If all neighbors are explored and target isn't found
+            return -1.0
+
+        # 3. Process all queries
+        # Note: We create a fresh set() for the 'visit' parameter on every new query
+        return [dfs(q[0], q[1], set()) for q in queries]

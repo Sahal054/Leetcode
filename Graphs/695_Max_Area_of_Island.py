@@ -107,3 +107,52 @@ class Solution:
                 area = max(area, dfs(r, c))
 
         return area
+
+
+
+
+
+"""  
+THE BFS SOLUTION
+"""
+
+import collections
+from typing import List
+
+class Solution:
+    def maxAreaOfIsland(self, grid: List[List[int]]) -> int:
+        ROWS = len(grid)
+        COLS = len(grid[0])
+        visit = set()
+        max_area = 0
+
+        def bfs(r, c):
+            queue = collections.deque([(r, c)])
+            visit.add((r, c))
+            current_area = 0
+
+            while queue:
+                row, col = queue.popleft()
+                current_area += 1 # We popped a piece of land, increase the size!
+                
+                # Check all 4 neighbors
+                directions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+                for dr, dc in directions:
+                    nr, nc = row + dr, col + dc
+                    
+                    # If neighbor is in bounds, is land, and hasn't been visited
+                    if (0 <= nr < ROWS and 0 <= nc < COLS and
+                        grid[nr][nc] == 1 and (nr, nc) not in visit):
+                        
+                        queue.append((nr, nc))
+                        visit.add((nr, nc)) # Mark visited IMMEDIATELY when adding to queue
+            
+            return current_area
+
+        # Iterate through every cell in the grid
+        for r in range(ROWS):
+            for c in range(COLS):
+                if grid[r][c] == 1 and (r, c) not in visit:
+                    max_area = max(max_area, bfs(r, c))
+
+        return max_area

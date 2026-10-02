@@ -1,112 +1,122 @@
+
 """
-116. Populating Next Right Pointers in Each Node (Iterative / O(1) Space)
+117. Populating Next Right Pointers in Each Node II (Iterative Dummy Node / O(1) Space)
 
 --- The Core Intuition ---
-1. Exploiting the Linked List: Instead of using a Queue to group levels together, 
-   we can just use the `.next` pointers we've ALREADY built! By the time you are 
-   iterating through Level 2, its nodes are already connected like a linked list. 
-   You can walk across Level 2 to wire up the children in Level 3.
-2. The Two Connections: When standing at a parent node (`curr`), you have to make 
-   two distinct wiring connections for the row below it:
-   - Same Parent: The left child connects to the right child (`curr.left.next = curr.right`).
-   - Different Parents (The Bridge): The right child must connect to the neighbor's 
-     left child. We find the neighbor using the pointer we already built! 
-     (`curr.right.next = curr.next.left`).
-3. Level Navigation: 
-   - `curr` traverses horizontally across the current level.
-   - `nxt` acts as an anchor/bookmark. It simply remembers the very first node 
-     of the row below, so when `curr` falls off the right edge of the tree, we 
-     know exactly where to start the next row.
+1. The Imperfect Tree Problem: In a perfect binary tree, we could confidently say 
+   `curr.left.next = curr.right`. But in an imperfect tree, nodes might be missing 
+   children, or there might be massive gaps between subtrees. The previous logic 
+   completely shatters here.
+2. The Linked List Builder: To safely navigate the gaps, we treat the level exactly 
+   one step below us as a brand new, empty linked list. We create a `dummy` node to 
+   act as the anchor for this next level, and a `tail` pointer to physically string 
+   the children together.
+3. The Horizontal Sweep: We use `curr` to walk horizontally across our current level 
+   (which is already fully connected). Every time `curr` looks down and sees a valid 
+   left or right child, it tells the `tail` pointer to grab it and attach it to our 
+   growing linked list. 
+4. Dropping Down: When `curr` reaches the end of the current row (`curr == None`), 
+   the row below is fully built and connected! We simply set `curr = dummy.next` to 
+   drop down to the very first node of that newly built row, and start the process over.
 
 --- Visual Traversal Walkthrough ---
 
-Example: 
+Example (Imperfect Tree): 
       1
-    /   \
-   2     3
-  / \   / \
- 4   5 6   7
+     / \
+    2   3
+   /     \
+  4       5
 
 [ INITIAL SETUP ]
 - curr = Node 1
-- nxt = Node 2 (curr.left)
 
 [ ROW 1 ]
+- Create dummy(0), tail = dummy.
 - curr is 1:
-  - Same Parent: 1.left.next = 1.right (Node 2 -> Node 3)
-  - Different Parent: 1.next is None. Bridge step skipped.
+  - Has left child (2): tail.next = 2, tail moves to 2.
+  - Has right child (3): tail.next = 3, tail moves to 3.
   - curr moves to 1.next (None).
-- curr is None. Drop down to next level:
-  - curr = nxt (Node 2)
-  - nxt = curr.left (Node 4)
+- Inner loop ends.
+- Drop down: curr = dummy.next (Node 2).
 
 [ ROW 2 ]
+- Create NEW dummy(0), tail = dummy.
 - curr is 2:
-  - Same Parent: 2.left.next = 2.right (Node 4 -> Node 5)
-  - Different Parent: 2.next is Node 3! So, 2.right.next = 3.left (Node 5 -> Node 6)
+  - Has left child (4): tail.next = 4, tail moves to 4.
+  - No right child.
   - curr moves to 2.next (Node 3).
 - curr is 3:
-  - Same Parent: 3.left.next = 3.right (Node 6 -> Node 7)
-  - Different Parent: 3.next is None. Bridge skipped.
+  - No left child.
+  - Has right child (5): tail.next = 5, tail moves to 5. 
+    *(Notice how node 4 is perfectly connected to node 5, jumping the gap!)*
   - curr moves to 3.next (None).
-- curr is None. Drop down:
-  - curr = nxt (Node 4)
-  - nxt = curr.left (None, because 4 is a leaf)
+- Inner loop ends.
+- Drop down: curr = dummy.next (Node 4).
 
 [ ROW 3 (Leaves) ]
-- The loop condition `while curr and nxt:` fails because `nxt` is None!
-- Leaves don't have children to wire up, so we are completely done.
+- Create NEW dummy(0), tail = dummy.
+- curr is 4: No children. curr moves to 4.next (Node 5).
+- curr is 5: No children. curr moves to 5.next (None).
+- Inner loop ends. 
+- Drop down: curr = dummy.next (None, because tail never moved!).
+
+[ END ]
+- Outer loop breaks because curr is None.
+- Return root.
 
 --- Complexity ---
-- Time Complexity: $O(N)$ where $N$ is the number of nodes. We visit each parent node 
-  exactly once to wire up its children.
-- Space Complexity: $O(1)$. This is the most optimal solution. By using the `.next` 
-  pointers to traverse horizontally, we completely eliminated the need for a Queue, 
-  bringing the memory footprint down to strict constant time.
+- Time Complexity: $O(N)$ where $N$ is the number of nodes in the tree. We visit each 
+  node essentially once when it is a child being wired up, and once when it is a parent 
+  sweeping across the row.
+- Space Complexity: $O(1)$. By using a lightweight dummy node and tail pointer, we 
+  built the connections on the fly, completely avoiding the need for a memory-heavy Queue.
 """
 
 # Definition for a Node.
-class Node:
-    def __init__(self, val: int = 0, left: 'Node' = None, right: 'Node' = None, next: 'Node' = None):
-        self.val = val
-        self.left = left
-        self.right = right
-        self.next = next
+# class Node:
+#     def __init__(self, val: int = 0, left: 'Node' = None, right: 'Node' = None, next: 'Node' = None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+#         self.next = next
 
 class Solution:
-    def connect(self, root: 'Optional[Node]') -> 'Optional[Node]':
-        # Base case: empty tree
+    def connect(self, root: 'Node') -> 'Node':
+        # Base case
         if not root:
             return None
         
-        # 'curr' walks across the current level.
-        # 'nxt' points to the start of the next level down.
-        curr, nxt = root, root.left
+        # curr walks horizontally across the level we are currently standing on
+        curr = root
 
-        # The loop stops when we reach the leaf level (nxt becomes None)
-        while curr and nxt:
+        while curr:
+            # Create a dummy node to anchor the start of the next level down
+            dummy = Node(0)
             
-            # 1. Wire the left child to the right child (Same Parent)
-            curr.left.next = curr.right
-
-            # 2. Wire the right child to the neighbor's left child (Different Parent Bridge)
-            if curr.next:
-                curr.right.next = curr.next.left
+            # Tail will be used to string together the children of the current level
+            tail = dummy
             
-            # Move horizontally to the next node in the current level
-            curr = curr.next
+            # Sweep across the current level
+            while curr: 
+                # If a left child exists, append it to our next-level linked list
+                if curr.left:
+                    tail.next = curr.left
+                    tail = tail.next
 
-            # If we reached the end of the current level...
-            if not curr:
-                # Drop down to the next level
-                curr = nxt
-                # Bookmark the start of the level below that
-                nxt = curr.left
+                # If a right child exists, append it to our next-level linked list
+                if curr.right:
+                    tail.next = curr.right
+                    tail = tail.next
+                
+                # Move to the next neighbor in the current level
+                curr = curr.next
         
+            # Once we finish sweeping the current level, drop down to the level we just built.
+            # dummy.next holds the very first node of that newly connected level.
+            curr = dummy.next
+    
         return root
-
-
-
 
 
 """

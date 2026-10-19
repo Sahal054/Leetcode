@@ -82,3 +82,96 @@ class Solution:
         # If the value at our target index is still our 'infinity' placeholder, 
         # it means no combination of coins can make that amount. Return -1.
         return dp[amount] if dp[amount] != amount + 1 else -1
+
+
+"""
+322. Coin Change (Top-Down Dynamic Programming / Memoization)
+
+--- The Core Intuition ---
+1. The Overlapping Subproblem Cure: We know the brute force DFS recalculates the exact 
+   same remainders over and over. To fix this, we introduce a `memo` dictionary (our cache). 
+   Whenever we figure out the minimum coins needed for a specific remainder, we write 
+   it down in our dictionary.
+2. The Cache Intercept: At the very beginning of our `dfs` function, before we do any 
+   looping or calculations, we ask: "Have we seen this remainder before?" If it's in 
+   our `memo`, we instantly return the saved answer, completely short-circuiting that 
+   entire branch of the recursion tree.
+3. Time Travel: By caching results, we convert an exponentially growing tree into a 
+   straightforward polynomial graph. We guarantee that we only ever calculate the answer 
+   for each number from `1` to `amount` exactly ONE time.
+
+--- Visual Traversal Walkthrough ---
+
+Example: coins = [1, 2], amount = 3
+Cache (memo) starts empty: {}
+
+[ INITIAL CALL ]
+- dfs(3): Not in memo. Try Coin 1 -> needs dfs(2).
+
+[ BRANCHING WITH COIN 1 ]
+- dfs(2): Not in memo. Try Coin 1 -> needs dfs(1).
+  - dfs(1): Not in memo. Try Coin 1 -> needs dfs(0).
+    - dfs(0): Base case, returns 0. (Cost: 1)
+  - dfs(1) tries Coin 2 -> needs dfs(-1). Base case, returns inf.
+  - dfs(1) finishes evaluating. Minimum is 1. 
+  - CACHE IT: memo[1] = 1. Returns 1.
+- dfs(2) tries Coin 2 -> needs dfs(0). Returns 0. (Cost: 1)
+- dfs(2) finishes evaluating. Minimum is 1.
+- CACHE IT: memo[2] = 1. Returns 1.
+- Total for taking Coin 1 first: 1 + dfs(2) = 2.
+
+[ BRANCHING WITH COIN 2 ]
+- Try Coin 2 -> needs dfs(1).
+- dfs(1): Wait! It IS in the memo! (memo[1] == 1). 
+- INSTANT RETURN: returns 1 without doing any further recursion.
+- Total for taking Coin 2 first: 1 + dfs(1) = 2.
+
+[ RESOLUTION ]
+- dfs(3) finishes. Minimum is 2.
+- CACHE IT: memo[3] = 2. 
+- Returns 2.
+
+--- Complexity ---
+- Time Complexity: $O(S \times N)$ where $S$ is the number of coin denominations and 
+  $N$ is the target amount. Because of our cache, we only compute the answer for each 
+  remainder (from $1$ to $N$) exactly once. During that single computation, we loop $S$ 
+  times (once per coin). This is a massive optimization over the $O(S^N)$ brute force.
+- Space Complexity: $O(N)$. We use $O(N)$ space for the recursive call stack (in the 
+  worst case where we use all $1 coins) AND $O(N)$ space to store up to $N$ results 
+  in our `memo` dictionary.
+"""
+
+class Solution:
+    def coinChange(self, coins: list[int], amount: int) -> int:
+        # Our cache to store previously computed minimums for specific remainders
+        memo = {}
+        
+        def dfs(rem):
+            # Base Case 1: We made exact change!
+            if rem == 0:
+                return 0
+            
+            # Base Case 2: We overshot the amount.
+            if rem < 0:
+                return float('inf')
+            
+            # CACHE CHECK: If we already solved this remainder, return it instantly!
+            if rem in memo:
+                return memo[rem]
+            
+            min_coins = float('inf')
+            
+            # Branch out and try every single coin
+            for coin in coins:
+                res = dfs(rem - coin)
+                
+                if res != float('inf'):
+                    min_coins = min(min_coins, 1 + res)
+            
+            # CACHE SAVE: Before returning, write down the answer for this remainder
+            memo[rem] = min_coins
+            return min_coins
+            
+        ans = dfs(amount)
+        
+        return ans if ans != float('inf') else -1

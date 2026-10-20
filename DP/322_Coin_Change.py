@@ -175,3 +175,164 @@ class Solution:
         ans = dfs(amount)
         
         return ans if ans != float('inf') else -1
+
+
+"""
+Variant: Coin Change (Finite Coins / Bottom-Up 1D DP)
+
+--- The Core Intuition ---
+1. The 1D DP Array: We create an array `dp` where `dp[j]` stores the minimum number of 
+   coins needed to make exactly amount `j`. We initialize it with `infinity` (since we 
+   haven't found any valid combinations yet) and set `dp[0] = 0` (it takes 0 coins to 
+   make an amount of 0).
+2. The Outer Loop (The Coin): We pick up one coin from our array and evaluate how it 
+   changes our DP array. Because we only loop through the `coins` array once, it is 
+   physically impossible to use a coin more than one time.
+3. The Inner Loop (The Reverse Trick): This is the most critical part of the 0/1 Knapsack 
+   pattern! We MUST loop through the amounts backwards (from `amount` down to `coin`). 
+   - Why backward? If we went forward, taking a coin at amount 1 would update amount 2. 
+     Then, when we reach amount 2 in the same loop, we might take the SAME coin again to 
+     update amount 3. 
+   - By going backward, `dp[j - coin]` is guaranteed to be untouched by the current coin, 
+     representing the clean state from the previous steps.
+
+--- Visual Traversal Walkthrough ---
+
+Example: coins = [1, 2], amount = 3
+Initial dp: [0, inf, inf, inf]
+
+[ PROCESSING COIN: 1 ]
+- Loop amounts backwards from 3 down to 1:
+  - j = 3: min(dp[3], 1 + dp[2]) -> min(inf, 1 + inf) = inf
+  - j = 2: min(dp[2], 1 + dp[1]) -> min(inf, 1 + inf) = inf
+  - j = 1: min(dp[1], 1 + dp[0]) -> min(inf, 1 + 0) = 1
+- State after Coin 1: [0, 1, inf, inf]
+
+[ PROCESSING COIN: 2 ]
+- Loop amounts backwards from 3 down to 2:
+  - j = 3: min(dp[3], 1 + dp[1]) -> min(inf, 1 + 1) = 2. (Uses the '1' coin + '2' coin)
+  - j = 2: min(dp[2], 1 + dp[0]) -> min(inf, 1 + 0) = 1. (Uses just the '2' coin)
+- State after Coin 2: [0, 1, 1, 2]
+
+[ END ]
+- dp[3] is 2. Return 2.
+
+--- Complexity ---
+- Time Complexity: $O(C \times N)$ where $C$ is the number of coins and $N$ is the 
+  target amount. We run a nested loop, but there is zero recursive overhead.
+- Space Complexity: $O(N)$ for the 1D array. We completely eliminated the 2D memoization 
+  dictionary and the recursive call stack, making this hyper-efficient in memory.
+"""
+
+class Solution:
+    def coinChangeFinite(self, coins: list[int], amount: int) -> int:
+        # Initialize the DP array with infinity
+        dp = [float('inf')] * (amount + 1)
+        
+        # Base case: 0 coins needed to make amount 0
+        dp[0] = 0
+        
+        # Process each coin exactly once
+        for coin in coins:
+            
+            # CRITICAL: Traverse backwards to ensure we only use the current coin once
+            for j in range(amount, coin - 1, -1):
+                
+                # Check if taking the coin yields a smaller total than skipping it
+                if dp[j - coin] != float('inf'):
+                    dp[j] = min(dp[j], 1 + dp[j - coin])
+                    
+        return dp[amount] if dp[amount] != float('inf') else -1
+
+
+"""
+Variant: Coin Change (Finite Coins / 0/1 Knapsack Pattern)
+
+--- The Core Intuition ---
+1. The Paradigm Shift: When coins are infinite, our only constraint is the `amount` 
+   remaining. But if we can only use each coin in the array exactly ONCE, we have 
+   to keep track of which coins we've already considered. We are shifting from an 
+   "Unbounded Knapsack" problem to a "0/1 Knapsack" problem.
+2. The 2D State: Our recursive function can no longer just be `dfs(rem)`. It must 
+   become `dfs(i, rem)`, where `i` represents our current position in the `coins` 
+   array. Our memoization cache also upgrades to a 2D tuple `(i, rem)`.
+3. The Binary Decision: Instead of running a `for` loop to try *every* coin at every 
+   step, we stand at coin `i` and make a binary choice (exactly like House Robber!):
+   - SKIP: Don't use coin `i`. Move to `i + 1` with the same remainder.
+   - TAKE: Use coin `i`. Add 1 to our coin count, subtract its value from the remainder, 
+     and crucially, move to `i + 1` so we never use it again.
+
+--- Visual Traversal Walkthrough ---
+
+Example: coins = [1, 2, 5], amount = 3
+
+[ INITIAL CALL ]
+- dfs(i=0, rem=3): Standing at Coin 1 (value: 1).
+- We have two choices: Take it, or Skip it.
+
+[ PATH A: TAKE COIN 0 ]
+- Cost = 1 + dfs(i=1, rem=2) (Moved to Coin 1, subtracted 1 from amount)
+  - dfs(i=1, rem=2): Standing at Coin 1 (value: 2).
+  - Take it: 1 + dfs(i=2, rem=0) 
+    - dfs(i=2, rem=0): Base case hit! Exact change. Returns 0.
+    - Cost of taking = 1 + 0 = 1.
+  - Skip it: dfs(i=2, rem=2) -> Fails eventually.
+  - Returns 1.
+- Path A Total: 1 + 1 = 2 coins.
+
+[ PATH B: SKIP COIN 0 ]
+- Cost = dfs(i=1, rem=3) (Moved to Coin 1, amount stays 3)
+  - dfs(i=1, rem=3): Standing at Coin 1 (value: 2).
+  - Take it: 1 + dfs(i=2, rem=1). Coin 2 is 5, too big. Fails.
+  - Skip it: dfs(i=2, rem=3). Coin 2 is 5, too big. Fails.
+- Path B Total: Infinity.
+
+[ RESOLUTION ]
+- min(Path A, Path B) -> min(2, inf) = 2.
+
+--- Complexity ---
+- Time Complexity: $O(C \times N)$ where $C$ is the total number of coins in the array 
+  and $N$ is the target amount. We calculate the answer for each unique `(index, remainder)` 
+  pair exactly once.
+- Space Complexity: $O(C \times N)$ to store the 2D states in our `memo` dictionary, 
+  plus $O(C)$ for the recursive call stack depth.
+"""
+
+class Solution:
+    def coinChangeFinite(self, coins: list[int], amount: int) -> int:
+        # Cache now stores tuples of (index, remainder)
+        memo = {}
+        
+        # 'i' tracks our current position in the coins array
+        def dfs(i, rem):
+            # Base Case 1: Exact change made!
+            if rem == 0:
+                return 0
+            
+            # Base Case 2: We overshot, or we ran out of coins to check
+            if rem < 0 or i == len(coins):
+                return float('inf')
+                
+            # CACHE CHECK
+            if (i, rem) in memo:
+                return memo[(i, rem)]
+                
+            # Choice 1: Skip this coin entirely. Move to the next index.
+            skip = dfs(i + 1, rem)
+            
+            # Choice 2: Take this coin. We add 1 to our coin count, reduce the remainder, 
+            # and MUST move to the next index so we don't reuse it.
+            take = float('inf')
+            if rem >= coins[i]:  # Only attempt taking if it doesn't overshoot
+                take = 1 + dfs(i + 1, rem - coins[i])
+                
+            # The best outcome is the minimum of our two binary choices
+            min_coins = min(skip, take)
+            
+            # CACHE SAVE
+            memo[(i, rem)] = min_coins
+            return min_coins
+
+        ans = dfs(0, amount)
+        
+        return ans if ans != float('inf') else -1

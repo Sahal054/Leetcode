@@ -108,3 +108,109 @@ class Solution:
                     bfs(r,c)
                     islands +=1
         return islands
+
+"""
+200. Number of Islands (Depth-First Search / Graph Traversal)
+
+--- The Core Intuition ---
+1. The Discovery (Outer Loop): We scan the grid reading it like a book, from top-left 
+   to bottom-right. The moment we spot a piece of land (`"1"`) that we haven't seen 
+   before, we know we have discovered a brand-new island! We increment our island counter.
+2. The Exploration (DFS): Once a new island is found, we must map out its entire 
+   landmass so we don't accidentally count its other half as a separate island later. 
+   The DFS function acts as an explorer, recursively running as far as it can in all 
+   4 directions, marking every connected piece of land as `visited`.
+3. The Base Cases (The Boundaries): Our DFS explorer blindly steps in every direction. 
+   It only stops and turns back if:
+   - It walks off the edge of the map (out of bounds).
+   - It steps into the water (`!= "1"`).
+   - It walks in a circle and steps on land it has already mapped (`in visit`).
+4. The Visited Set: Keeping track of visited coordinates guarantees we only launch our 
+   DFS exactly once per island, preventing infinite recursive loops.
+
+--- Visual Traversal Walkthrough ---
+
+Example Grid:
+[1, 1, 0]
+[1, 0, 0]
+[0, 0, 1]
+
+[ INITIAL SETUP ]
+- res = 0
+- visit = set()
+- Scan begins at (0, 0).
+
+[ DISCOVERING ISLAND 1 ]
+- (0, 0) is "1" and not visited.
+- A new island! res += 1 (res is now 1).
+- Launch DFS(0, 0):
+  - Mark (0, 0) as visited.
+  - Step Down to (1, 0): It's a "1"! Mark visited.
+    - (1, 0) steps Right to (1, 1): Water ("0"). Turns back.
+    - (1, 0) steps Down to (2, 0): Water ("0"). Turns back.
+  - Step Right to (0, 1): It's a "1"! Mark visited.
+    - (0, 1) steps Right to (0, 2): Water ("0"). Turns back.
+- DFS finishes. The entire top-left landmass is mapped in `visit`.
+
+[ CONTINUING THE SCAN ]
+- (0, 1) is "1", but it IS in `visit`. Skip.
+- (1, 0) is "1", but it IS in `visit`. Skip.
+- All "0"s are skipped.
+
+[ DISCOVERING ISLAND 2 ]
+- (2, 2) is "1" and not in `visit`.
+- A new island! res += 1 (res is now 2).
+- Launch DFS(2, 2):
+  - Mark (2, 2) as visited.
+  - All 4 directions lead off the map or to water. DFS finishes instantly.
+
+[ END ]
+- Grid scan finishes. Return res (2).
+
+--- Complexity ---
+- Time Complexity: $O(M \times N)$ where $M$ is rows and $N$ is columns. Even with the 
+  nested loops and recursion, every single cell is evaluated and marked as visited 
+  at most a constant number of times. 
+- Space Complexity: $O(M \times N)$. In the absolute worst-case scenario (where the 
+  entire grid is one giant landmass), the recursive call stack will go $M \times N$ 
+  levels deep. The `visit` set also scales up to $M \times N$ size.
+"""
+
+class Solution:
+    def numIslands(self, grid: list[list[str]]) -> int:
+        res = 0
+        
+        # Tracks coordinates we've already mapped so we don't count them twice
+        visit = set()
+        
+        rows = len(grid)
+        cols = len(grid[0])
+
+        def dfs(r, c):
+            # BASE CASES: Stop exploring if we hit boundaries, water, or mapped land
+            if (r not in range(rows) or 
+                c not in range(cols) or
+                grid[r][c] != "1" or 
+                (r, c) in visit):
+                return
+            
+            # Mark the current piece of land as mapped
+            visit.add((r, c))
+
+            # Recursively explore all 4 adjacent directions
+            dfs(r + 1, c)
+            dfs(r - 1, c)
+            dfs(r, c + 1)
+            dfs(r, c - 1)
+
+
+        # The Grid Scan (Outer Loop)
+        for r in range(rows):
+            for c in range(cols):
+                
+                # If we find land we haven't mapped yet, we found a new island
+                if grid[r][c] == "1" and (r, c) not in visit:
+                    dfs(r, c)  # Map out its entire connected landmass
+                    res += 1   # Increment our total island count
+                    
+        return res

@@ -98,3 +98,97 @@ class Solution:
             
         # Start at index 0 with the full target remaining
         return dfs(0, target)
+"""
+416. Partition Equal Subset Sum (Bottom-Up Dynamic Programming / Set Compression)
+
+--- The Core Intuition ---
+1. The Mathematical Reduction: Splitting the array into two equal halves means each 
+   subset must sum to `target = total // 2`. If `total` is odd, an equal split is 
+   impossible (`False`). If we find just ONE subset summing to `target`, the leftover 
+   numbers are guaranteed to sum to `target` as well.
+2. Tracking Only Achievable Sums (Set vs. Array): Instead of allocating a boolean array 
+   of size `target + 1` (which wastes time scanning unreachable indices), we store ONLY 
+   the exact subset sums we can actually form inside a hash set `dp`. We seed `dp = {0}` 
+   because an empty subset always sums to 0.
+3. Iterative Branching: As we step backward through `nums`, every sum `t` already sitting 
+   in `dp` represents a valid sum built from the elements to the right. For the current 
+   number `nums[i]`, we have two choices for every existing sum `t`:
+   - EXCLUDE `nums[i]`: Keep `t` as is (handled automatically by `nextDp = dp.copy()`).
+   - INCLUDE `nums[i]`: Create a brand-new achievable sum `t + nums[i]`.
+4. Snapshot Isolation (`nextDp`): By writing new sums into `nextDp` rather than mutating 
+   `dp` mid-loop, we guarantee that `nums[i]` is used at most ONCE per subset.
+
+--- Visual Traversal Walkthrough ---
+
+Example: nums = [1, 5, 11, 5]
+Total sum = 22 (even) -> target = 11.
+
+[ INITIAL SETUP ]
+- dp = {0}
+- Iterate 'i' backward from index 3 down to 0.
+
+[ i = 3 | nums[3] = 5 ]
+- nextDp = {0}
+- Loop t in {0}:
+  - t = 0: nextDp.add(0 + 5) -> 5
+- dp becomes {0, 5}
+
+[ i = 2 | nums[2] = 11 ]
+- nextDp = {0, 5}
+- Loop t in {0, 5}:
+  - t = 0: nextDp.add(0 + 11) -> 11
+  - t = 5: nextDp.add(5 + 11) -> 16
+- dp becomes {0, 5, 11, 16}
+
+[ i = 1 | nums[1] = 5 ]
+- nextDp = {0, 5, 11, 16}
+- Loop t in {0, 5, 11, 16}:
+  - t = 0  -> adds 5 (already in set)
+  - t = 5  -> adds 10
+  - t = 11 -> adds 16 (already in set)
+  - t = 16 -> adds 21
+- dp becomes {0, 5, 10, 11, 16, 21}
+
+[ i = 0 | nums[0] = 1 ]
+- nextDp = {0, 5, 10, 11, 16, 21}
+- Loop t in {0, 5, 10, 11, 16, 21}:
+  - Adds 1, 6, 11, 12, 17, 22
+- dp becomes {0, 1, 5, 6, 10, 11, 12, 16, 17, 21, 22}
+
+[ END ]
+- Check if target (11) is in dp: True!
+
+--- Complexity ---
+- Time Complexity: $O(N \times S)$ where $N$ is `len(nums)` and $S$ is `sum(nums)` (bounded 
+  by $O(N \times \text{target})$ if we prune sums greater than `target`). In the worst case, 
+  the set holds up to $S + 1$ distinct integers, and we iterate through them once per element.
+- Space Complexity: $O(S)$ to store the set of achievable sums in `dp` and `nextDp`.
+"""
+
+class Solution:
+    def canPartition(self, nums: list[int]) -> bool:
+        total = sum(nums)
+        target = total // 2
+
+        # Odd totals cannot be split into two equal integers
+        if total % 2 != 0:
+            return False
+        
+        # Stores all unique subset sums achievable so far
+        dp = set()
+        dp.add(0)
+
+        # Process each number one at a time
+        for i in range(len(nums) - 1, -1, -1):
+            # Snapshot the sums achievable WITHOUT nums[i]
+            nextDp = dp.copy()
+
+            # Generate all new sums achievable WITH nums[i]
+            for t in dp:
+                # Tip: You can also return True immediately here if (t + nums[i]) == target
+                nextDp.add(t + nums[i])
+                
+            # Advance our state to include the new combinations
+            dp = nextDp
+        
+        return True if target in dp else False
